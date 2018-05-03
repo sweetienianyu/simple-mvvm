@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>watch</title>
+</head>
+<body>
+<script>
+var obj = {
+    name: 'youngwind',
+    age: 25,
+    time: {
+        second: 1,
+        first: 0
+    }
+};
+class Event {
+    constructor() {
+        this.events = {};
+    }
+    on(eventName, callback) {
+        if(!this.events[eventName]) {
+            this.events[eventName] = [callback];
+        }else {
+            this.events[eventName].push(callback)
+        }
+    }
+    emit(eventName, callback) {
+       let methods = this.events[eventName];
+       methods.forEach((v) => {
+           v()
+       })
+    }
+}
+
+
+class Vue {
+   constructor(data) {
+       this.data = data;
+       this.walk(data);
+       this.eventManager = new Event();
+   }
+   walk(data) {
+       let self = this;
+       let val;
+       for(let i in data) {
+           if(data.hasOwnProperty(i)) {
+               val = data[i];
+               if(typeof val === 'object') {
+                    new Vue(val)
+               }
+           }
+           self.Observe(i, val)
+       }
+   }
+   Observe(key, val) {
+       let self = this;
+       Object.defineProperty(self.data, key, {
+           enumerable: true,
+           configurable: true,
+           get: ()=> {
+               console.log('您访问了' + key);
+               return val;
+           },
+           set: (newValue)=> {
+               console.log('你设置了' + key);
+               console.log('新的' + key + '=' + newValue);
+               self.eventManager.emit(key)
+               if(typeof newValue === 'object') {
+                   new Vue(newValue);
+               }
+               val = newValue
+           }
+       })
+   }
+   watch(eventName, callback) {
+       this.eventManager.on(eventName, callback)
+   }
+}
+
+let app = new Vue(obj)
+app.watch('age', function() {
+    console.log(' i am old')
+})
+
+</script>  
+</body>
+</html>
